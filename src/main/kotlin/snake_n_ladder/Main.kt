@@ -33,10 +33,14 @@ class Player constructor(
         id = getUniqueId()
     }
 
-    fun setCurrentPosition(position: Int) {
-        if (currentPosition + position > 100)
+    fun setPositionAs(position: Int){
+        currentPosition = position
+    }
+
+    fun diceRolledAndWalkThisMuch(steps: Int) {
+        if (currentPosition + steps > 100)
             return
-        currentPosition += position
+        currentPosition += steps
     }
 
     fun getCurrentPosition() = currentPosition
@@ -70,13 +74,15 @@ class GameSimulator constructor(
         // at least 1 winner
         while (winner == null) {
             val numberOnDice = rollDice()
-            players[currentTurn].setCurrentPosition(numberOnDice)
+            // print("Its ${players[currentTurn].getName()} turn, position: ${players[currentTurn].getCurrentPosition()}")
+            players[currentTurn].diceRolledAndWalkThisMuch(numberOnDice)
+            // print(" and he got $numberOnDice and now his position is ${players[currentTurn].getCurrentPosition()}\n")
             if (players[currentTurn].getCurrentPosition() == 100) {
                 winner = players[currentTurn]
             }
             // find if there was a snake or ladder, and if so then set it to that
             if (snakesAndLaddersMappings.containsKey(players[currentTurn].getCurrentPosition())) {
-                players[currentTurn].setCurrentPosition(
+                players[currentTurn].setPositionAs(
                     snakesAndLaddersMappings[
                         players[currentTurn].getCurrentPosition()
                     ] ?: 0
