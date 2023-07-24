@@ -1,6 +1,7 @@
 package main
 
 import "fmt"
+import "github/dalakoti07/cache_enviction/common"
 
 type Queue []int
 
@@ -26,13 +27,11 @@ func (q *Queue) isEmpty() bool {
 }
 
 func main() {
-	capacity := 10
 	hashMap := map[int]bool{}
-	itemsToBeInserted := []int{1, 5, 6, 7, 8, 1, 5, 6, 7, 5, 6, 7, 8, 1, 5, 5, 6, 7, 8, 1, 5, 6, 7, 5, 6, 7, 8, 1}
 	queue := &Queue{}
 	cacheHits := 0
 	cacheMiss := 0
-	for _, item := range itemsToBeInserted {
+	for _, item := range common.ItemsToBeInserted {
 		// check if it already exists in cache
 		_, exists := hashMap[item]
 		if exists {
@@ -43,7 +42,7 @@ func main() {
 
 		// it's a cache miss
 		cacheMiss++
-		if queue.size() == capacity {
+		if queue.size() == common.Capacity {
 			val, _ := queue.Dequeue()
 			delete(hashMap, val)
 		}
