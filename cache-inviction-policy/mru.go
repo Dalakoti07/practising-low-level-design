@@ -6,24 +6,24 @@ import (
 	"github/dalakoti07/cache_enviction/common"
 )
 
-var cacheHits = 0
-var cacheMiss = 0
+var cacheHitsMRU = 0
+var cacheMissMRU = 0
 
-type LRUCache struct {
+type MRUCache struct {
 	capacity int
 	cache    map[int]*list.Element
 	list     *list.List
 }
 
-func getLRUCache(capacity int) LRUCache {
-	return LRUCache{
+func getMRUCache(capacity int) MRUCache {
+	return MRUCache{
 		capacity: capacity,
 		cache:    make(map[int]*list.Element),
 		list:     list.New(),
 	}
 }
 
-func (lruCache *LRUCache) Get(key int) int {
+func (lruCache *MRUCache) Get(key int) int {
 	if elem, found := lruCache.cache[key]; found {
 		lruCache.list.MoveToFront(elem)
 		return elem.Value.(*common.Entry).Value
@@ -31,19 +31,19 @@ func (lruCache *LRUCache) Get(key int) int {
 	return -1
 }
 
-func (lruCache *LRUCache) Put(key int, value int) {
+func (lruCache *MRUCache) Put(key int, value int) {
 	if elem, found := lruCache.cache[key]; found {
 		elem.Value.(*common.Entry).Value = value
-		cacheHits++
+		cacheHitsMRU++
 		lruCache.list.MoveToFront(elem)
 	} else {
 		if len(lruCache.cache) >= lruCache.capacity {
 			// Remove the least recently used element from the cache and list
-			oldest := lruCache.list.Back()
-			delete(lruCache.cache, oldest.Value.(*common.Entry).Key)
-			lruCache.list.Remove(oldest)
+			newest := lruCache.list.Front()
+			delete(lruCache.cache, newest.Value.(*common.Entry).Key)
+			lruCache.list.Remove(newest)
 		}
-		cacheMiss++
+		cacheMissMRU++
 
 		newEntry := &common.Entry{Key: key, Value: value}
 		elem := lruCache.list.PushFront(newEntry)
@@ -52,11 +52,11 @@ func (lruCache *LRUCache) Put(key int, value int) {
 }
 
 func main() {
-	lruCache := getLRUCache(common.Capacity)
+	mruCache := getMRUCache(common.Capacity)
 
 	for _, item := range common.ItemsToBeInserted {
-		lruCache.Put(item, item)
+		mruCache.Put(item, item)
 	}
 
-	fmt.Printf("cache hits: %d, cache miss: %d\n", cacheHits, cacheMiss)
+	fmt.Printf("cache hits: %d, cache miss: %d\n", cacheHitsMRU, cacheMissMRU)
 }
