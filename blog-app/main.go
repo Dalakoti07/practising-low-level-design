@@ -37,14 +37,17 @@ func createArticlesInRows(db *sql.DB) {
 	text := generateRandomText(fileSize)
 
 	for i := 1; i <= 1000; i++ {
+		isLongArticle := false
 		content := "This is the content of the article."
 		if i%5 == 0 {
 			content = text
+			isLongArticle = true
 		}
 		_, err := db.Exec(
-			fmt.Sprintf("INSERT INTO %s (title, content) VALUES ($1, $2)", tableName),
+			fmt.Sprintf("INSERT INTO %s (title, content, longArticle) VALUES ($1, $2, $3)", tableName),
 			fmt.Sprintf("Article %d", i),
 			content,
+			isLongArticle,
 		)
 		if err != nil {
 			log.Fatal(err)
@@ -146,6 +149,7 @@ func approachOne(db *sql.DB) {
 		"id Serial PRIMARY KEY," +
 		"title VARCHAR(255) NOT NULL," +
 		"content TEXT NOT NULL," +
+		"longArticle BOOLEAN DEFAULT FALSE," +
 		"created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
 	)
 	if err != nil {
