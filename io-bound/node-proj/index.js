@@ -24,7 +24,10 @@ client.connect()
   app.get('/data', async (req, res) => {
     try {
       const result = await client.query('SELECT * FROM books');  // Replace 'your_table_name' with your actual table name
-      res.json(result.rows);
+      res.json({
+        "from":"node",
+        "data":result.rows
+      });
     } catch (err) {
       console.error('Error executing query', err.stack);
       res.status(500).send('Internal Server Error');
