@@ -1,39 +1,27 @@
-const { Client } = require('pg');
 const express = require('express');
 const app = express();
-const port = 3001;
 
-// Database connection configuration
-const client = new Client({
-    user: 'postgres',       // Replace with your database username
-    host: 'localhost',           // Replace with your database host (e.g., localhost or an IP address)
-    database: 'playground_db',   // Replace with your database name
-    password: 'postgres',   // Replace with your database password
-    port: 5432,                  // Default PostgreSQL port
+function calculatePrimes(limit) {
+    const isPrime = Array(limit + 1).fill(true);
+    isPrime[0] = isPrime[1] = false;
+    for (let p = 2; p * p <= limit; p++) {
+        if (isPrime[p]) {
+            for (let i = p * p; i <= limit; i += p) {
+                isPrime[i] = false;
+            }
+        }
+    }
+    return Array.from({length: limit + 1}, (v, k) => k).filter(p => isPrime[p]);
+}
+
+app.get('/primes', (req, res) => {
+    const primes = calculatePrimes(1000000);
+    res.json({
+        numbers: primes,
+        from: "node"
+    });
 });
 
-// Connect to the database
-client.connect()
-  .then(() => {
-    console.log('Connected to the database');
-  })
-  .catch((err) => {
-    console.error('Error connecting to the database', err.stack);
-  });
-
-  app.get('/data', async (req, res) => {
-    try {
-      const result = await client.query('SELECT * FROM books');  // Replace 'your_table_name' with your actual table name
-      res.json({
-        "from":"node",
-        "data":result.rows
-      });
-    } catch (err) {
-      console.error('Error executing query', err.stack);
-      res.status(500).send('Internal Server Error');
-    }
-  });
-
-app.listen(port, () => {
-  console.log(`Node.js server running on http://localhost:${port}`);
+app.listen(3000, () => {
+    console.log('Server listening on port 3000');
 });

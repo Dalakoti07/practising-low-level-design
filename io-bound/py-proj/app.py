@@ -1,36 +1,27 @@
-# app.py
-
 from flask import Flask, jsonify
-import psycopg2
-from psycopg2 import sql
+import time
 
 app = Flask(__name__)
 
-# Database connection configuration
-def get_db_connection():
-    conn = psycopg2.connect(
-        dbname='playground_db',    # Replace with your database name
-        user='postgres',      # Replace with your database username
-        password='postgres',  # Replace with your database password
-        host='localhost',          # Replace with your database host (e.g., localhost or an IP address)
-        port='5432'                # Default PostgreSQL port
-    )
-    return conn
+def calculate_primes(limit):
+    is_prime = [True] * (limit + 1)
+    p = 2
+    while (p * p <= limit):
+        if (is_prime[p] == True):
+            for i in range(p * p, limit + 1, p):
+                is_prime[i] = False
+        p += 1
+    return [p for p in range(2, limit) if is_prime[p]]
 
-@app.route('/data', methods=['GET'])
-def get_data():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM books')  # Replace 'your_table_name' with your actual table name
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    # Convert rows to a list of dictionaries
-    columns = [desc[0] for desc in cur.description]
-    data = [dict(zip(columns, row)) for row in rows]
-    
-    return jsonify({"from":"python", "data": data})
+@app.route('/primes')
+def get_primes():
+    start_time = time.time()
+    primes = calculate_primes(1000000)
+    duration = time.time() - start_time
+    return jsonify({
+        "numbers": primes,
+        "from": "python"
+    })
 
 if __name__ == '__main__':
-    app.run(port=3000)
+    app.run(port=3001)
