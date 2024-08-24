@@ -82,19 +82,16 @@ func TestAccountTransfers(t *testing.T) {
 		t.Fatalf("Failed to insert SAURABH account: %v", err)
 	}
 
-	// Perform transfers in a transaction
-	if err != nil {
-		t.Fatalf("Failed to begin transaction: %v", err)
-	}
-
-	for i := 0; i < 10; i++ {
+	// create 100 accounts
+	for i := 0; i < 100; i++ {
 		_, err := db.Exec(`INSERT INTO accounts (name, balance) VALUES ($1, $2)`, "Account"+fmt.Sprintf("-%d", i), 100)
 		if err != nil {
 			t.Fatalf("Failed to create account %d: %v", i, err)
 		}
 	}
 
-	for i := 0; i < 10; i++ {
+	// transfer money from 100 accounts to SAURABH account
+	for i := 0; i < 100; i++ {
 		err = transferMoney(db, "Account"+fmt.Sprintf("-%d", i), "SAURABH", 100)
 		if err != nil {
 			fmt.Printf("error in transferring amount from %s to Saurabh", "Account"+fmt.Sprintf("-%d", i))
@@ -113,5 +110,5 @@ func TestAccountTransfers(t *testing.T) {
 		t.Fatalf("Failed to query SAURABH balance: %v", err)
 	}
 
-	assert.Equal(t, 1000.0, balance, "Balance of SAURABH should be 1000")
+	assert.Equal(t, 10_000.0, balance, "Balance of SAURABH should be 1000")
 }
