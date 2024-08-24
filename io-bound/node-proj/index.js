@@ -15,7 +15,11 @@ function calculatePrimes(limit) {
 }
 
 app.get('/primes', (req, res) => {
+    const startTime = Date.now(); // Capture start time
     const primes = calculatePrimes(1000000);
+    const endTime = Date.now();   // Capture end time
+    const duration = endTime - startTime; // Calculate duration in milliseconds
+    console.log("duration ", duration);
     res.json({
         numbers: primes,
         from: "node"
