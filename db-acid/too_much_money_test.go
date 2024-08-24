@@ -3,17 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"sync"
-	"testing"
-
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
+	"sync"
+	"testing"
+	"time"
 )
 
 const (
 	// Database connection string
 	connStr = "user=postgres dbname=playground_db sslmode=disable"
 )
+const TotalAccounts = 1000
 
 func setupDB() (*sql.DB, error) {
 	db, err := sql.Open("postgres", connStr)
@@ -23,13 +24,18 @@ func setupDB() (*sql.DB, error) {
 	return db, nil
 }
 
+var mutex sync.Mutex
+
 // transferMoney transfers a specified amount from one account to another within a single transaction
 func transferMoney(db *sql.DB, fromAccount string, toAccount string, amount float64) error {
+	mutex.Lock()
+	defer mutex.Unlock()
 	// Begin a transaction
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		if err != nil {
 			tx.Rollback()
@@ -53,7 +59,17 @@ func transferMoney(db *sql.DB, fromAccount string, toAccount string, amount floa
 	return nil
 }
 
-const TotalAccounts = 1000
+func readBalanceOfSaurabh(db *sql.DB, t *testing.T) {
+	start := time.Now()
+	row := db.QueryRow(`SELECT balance FROM accounts WHERE name = $1`, "SAURABH")
+	var balance float64
+	err := row.Scan(&balance)
+	if err != nil {
+		t.Fatalf("Failed to query SAURABH balance: %v", err)
+	}
+	elapsed := time.Since(start)
+	fmt.Printf("Read SAURABH's account balance %v and in time %v\n", balance, elapsed)
+}
 
 func TestAccountTransfers(t *testing.T) {
 	db, err := setupDB()
@@ -106,6 +122,7 @@ func TestAccountTransfers(t *testing.T) {
 			}
 		}(i)
 	}
+	readBalanceOfSaurabh(db, t)
 	wg.Wait()
 	if err != nil {
 		t.Fatalf("Failed to commit transaction: %v", err)
