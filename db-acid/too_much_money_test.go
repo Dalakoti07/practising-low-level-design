@@ -53,7 +53,7 @@ func transferMoney(db *sql.DB, fromAccount string, toAccount string, amount floa
 	return nil
 }
 
-const TotalAccounts = 100
+const TotalAccounts = 1000
 
 func TestAccountTransfers(t *testing.T) {
 	db, err := setupDB()
@@ -85,7 +85,7 @@ func TestAccountTransfers(t *testing.T) {
 		t.Fatalf("Failed to insert SAURABH account: %v", err)
 	}
 
-	// create 100 accounts
+	// create TotalAccounts accounts
 	for i := 0; i < TotalAccounts; i++ {
 		_, err := db.Exec(`INSERT INTO accounts (name, balance) VALUES ($1, $2)`, "Account"+fmt.Sprintf("-%d", i), 100)
 		if err != nil {
@@ -95,7 +95,7 @@ func TestAccountTransfers(t *testing.T) {
 
 	// use goroutine
 	var wg sync.WaitGroup
-	// transfer money from 100 accounts to SAURABH account
+	// transfer money from TotalAccounts accounts to SAURABH account
 	for i := 0; i < TotalAccounts; i++ {
 		wg.Add(1)
 		go func(i int) {
