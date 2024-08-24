@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -52,6 +53,8 @@ func transferMoney(db *sql.DB, fromAccount string, toAccount string, amount floa
 	return nil
 }
 
+const TotalAccounts = 100
+
 func TestAccountTransfers(t *testing.T) {
 	db, err := setupDB()
 	if err != nil {
@@ -83,24 +86,31 @@ func TestAccountTransfers(t *testing.T) {
 	}
 
 	// create 100 accounts
-	for i := 0; i < 100; i++ {
+	for i := 0; i < TotalAccounts; i++ {
 		_, err := db.Exec(`INSERT INTO accounts (name, balance) VALUES ($1, $2)`, "Account"+fmt.Sprintf("-%d", i), 100)
 		if err != nil {
 			t.Fatalf("Failed to create account %d: %v", i, err)
 		}
 	}
 
+	// use goroutine
+	var wg sync.WaitGroup
 	// transfer money from 100 accounts to SAURABH account
-	for i := 0; i < 100; i++ {
-		err = transferMoney(db, "Account"+fmt.Sprintf("-%d", i), "SAURABH", 100)
-		if err != nil {
-			fmt.Printf("error in transferring amount from %s to Saurabh", "Account"+fmt.Sprintf("-%d", i))
-		}
+	for i := 0; i < TotalAccounts; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			err = transferMoney(db, "Account"+fmt.Sprintf("-%d", i), "SAURABH", 100)
+			if err != nil {
+				fmt.Printf("%s error in transferring amount from %s to Saurabh\n", err.Error(), "Account"+fmt.Sprintf("-%d", i))
+			}
+		}(i)
 	}
-
+	wg.Wait()
 	if err != nil {
 		t.Fatalf("Failed to commit transaction: %v", err)
 	}
+	println("All transfer done")
 
 	// Validate the results
 	row := db.QueryRow(`SELECT balance FROM accounts WHERE name = $1`, "SAURABH")
@@ -110,5 +120,5 @@ func TestAccountTransfers(t *testing.T) {
 		t.Fatalf("Failed to query SAURABH balance: %v", err)
 	}
 
-	assert.Equal(t, 10_000.0, balance, "Balance of SAURABH should be 1000")
+	assert.Equal(t, TotalAccounts*100.0, balance, "Balance of SAURABH should be 1000")
 }
